@@ -6,7 +6,7 @@ from django.db.models import Q
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.forms import UserCreationForm
-from .models import Room, Topic, Message
+from .models import Room, Topic, Message,User
 from .forms import RoomForm
 
 # Create your views here.
@@ -95,11 +95,12 @@ def room(request, pk):
     return render(request, 'base/room.html', context)
 
 def userProfile(request, pk):
-    user= User.objects.get(id=pk)
-    rooms = user.room.set.all()
-    room_messages=user.message_set.all()
-    topics = Topic.object.all()
-    context = {'user': user, 'rooms' : rooms, 'room_messages': room_messages, 'topics' : topics}
+    user = User.objects.get(username=pk)
+    rooms = user.room_set.all()
+    room_messages = user.message_set.all()
+    topics = Topic.objects.all()
+    context = {'user': user, 'rooms': rooms,
+               'room_messages': room_messages, 'topics': topics}
     return render(request, 'base/profile.html', context)
 
 
@@ -109,7 +110,10 @@ def createRoom(request):
     if request.method == 'POST':
         form = RoomForm(request.POST)
         if form.is_valid():
-            form.save()
+            room = form.save(commit=False)
+            room.host = request.user
+            room.save()
+
             return redirect('home')
     
     context = {'form' : form}
